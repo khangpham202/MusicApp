@@ -20,20 +20,17 @@ class HomeScreen extends StatelessWidget {
             Colors.deepPurple.shade800.withOpacity(0.8),
             Colors.deepPurple.shade200.withOpacity(0.8)
           ])),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: const _CustomAppBar(),
-          bottomNavigationBar: const _CustomNavBar(),
-          body: SingleChildScrollView(
-            child: Column(
-              children: [
-                const _DiscoverMusic(),
-                _TrendingMusic(songs: songs),
-                _PlayListMusic(playlists: playlists)
-              ],
-            ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: const _CustomAppBar(),
+        bottomNavigationBar: const CustomNavBar(),
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              const _DiscoverMusic(),
+              _TrendingMusic(songs: songs),
+              _PlayListMusic(playlists: playlists)
+            ],
           ),
         ),
       ),
@@ -149,40 +146,63 @@ class _DiscoverMusic extends StatelessWidget {
   }
 }
 
-class _CustomNavBar extends StatelessWidget {
-  const _CustomNavBar({
-    Key? key,
-  }) : super(key: key);
+// class _CustomNavBar extends StatefulWidget {
+//   const _CustomNavBar({
+//     Key? key,
+//   }) : super(key: key);
 
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.deepPurple.shade800,
-        unselectedItemColor: Colors.white,
-        selectedItemColor: Colors.white,
-        showUnselectedLabels: false,
-        showSelectedLabels: false,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_border_outlined),
-            label: "Favotires",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.play_circle_outlined),
-            label: "Play",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_alt_outlined),
-            label: "Profile",
-          ),
-        ]);
-  }
-}
+//   @override
+//   State<_CustomNavBar> createState() => _CustomNavBarState();
+// }
+
+// class _CustomNavBarState extends State<_CustomNavBar> {
+//   int _selectedIndex = 0;
+
+//   final List<Widget> _screens = [
+//     const HomeScreen(),
+//     const FavoriteScreen(),
+//     const PlayScreen(),
+//     const ProfileScreen()
+//   ];
+//   void _onItemTapped(int index) {
+//     setState(() {
+//       _selectedIndex = index;
+//       Navigator.push(
+//           context, MaterialPageRoute(builder: (context) => _screens[index]));
+//     });
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return BottomNavigationBar(
+//         type: BottomNavigationBarType.fixed,
+//         backgroundColor: Colors.deepPurple.shade800,
+//         unselectedItemColor: Colors.white,
+//         selectedItemColor: Colors.white,
+//         showUnselectedLabels: false,
+//         showSelectedLabels: false,
+//         currentIndex: _selectedIndex,
+//         onTap: _onItemTapped,
+//         items: const [
+//           BottomNavigationBarItem(
+//             icon: Icon(Icons.home),
+//             label: "Home",
+//           ),
+//           BottomNavigationBarItem(
+//             icon: Icon(Icons.favorite_border_outlined),
+//             label: "Favotires",
+//           ),
+//           BottomNavigationBarItem(
+//             icon: Icon(Icons.play_circle_outlined),
+//             label: "Play",
+//           ),
+//           BottomNavigationBarItem(
+//             icon: Icon(Icons.people_alt_outlined),
+//             label: "Profile",
+//           ),
+//         ]);
+//   }
+// }
 
 class _CustomAppBar extends StatelessWidget with PreferredSizeWidget {
   const _CustomAppBar();
@@ -202,6 +222,8 @@ class _CustomAppBar extends StatelessWidget with PreferredSizeWidget {
           ),
         )
       ],
+      title: const Text("Music App"),
+      centerTitle: true,
     );
   }
 

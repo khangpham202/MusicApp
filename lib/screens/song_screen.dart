@@ -14,21 +14,7 @@ class SongScreen extends StatefulWidget {
 
 class _SongScreenState extends State<SongScreen> {
   AudioPlayer audioPlayer = AudioPlayer();
-  Song song = Song.songs[0];
-  @override
-  void initState() {
-    super.initState();
-    audioPlayer.setAudioSource(ConcatenatingAudioSource(children: [
-      AudioSource.uri(Uri.parse("asset://${song.url}")),
-      AudioSource.uri(Uri.parse("asset://${Song.songs[1].url}")),
-    ]));
-  }
-
-  @override
-  void dispose() {
-    audioPlayer.dispose();
-    super.dispose();
-  }
+  late Song song;
 
   Stream<SeekBarData> get _seekBarDataStream =>
       Rx.combineLatest2<Duration, Duration?, SeekBarData>(
@@ -40,7 +26,13 @@ class _SongScreenState extends State<SongScreen> {
   @override
   Widget build(BuildContext context) {
     final arguments = ModalRoute.of(context)!.settings.arguments as Song;
-    song = arguments;
+
+    setState(() {
+      song = arguments;
+      audioPlayer.setAudioSource(ConcatenatingAudioSource(children: [
+        AudioSource.asset(song.url),
+      ]));
+    });
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -121,7 +113,9 @@ class _MusicPlayer extends StatelessWidget {
             children: [
               IconButton(
                 iconSize: 35,
-                onPressed: () {},
+                onPressed: () {
+                  print(audioPlayer.currentIndex);
+                },
                 icon: const Icon(Icons.settings, color: Colors.white),
               ),
               IconButton(

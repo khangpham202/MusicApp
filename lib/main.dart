@@ -1,13 +1,23 @@
-import 'package:flutter/material.dart';
-import 'package:music_app/utils/routes.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import './utils/app_observer.dart';
+// ignore_for_file: must_be_immutable
 
-void main() {
-  Bloc.observer = AppBlocObserver();
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:music_app/screens/home_screen.dart';
+import 'package:music_app/screens/login_screen.dart';
+import 'package:music_app/utils/routes.dart';
+// ignore: depend_on_referenced_packages
+import 'package:firebase_core/firebase_core.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
+// import './utils/app_observer.dart';
+
+Future<void> main() async {
+  // Bloc.observer = AppBlocObserver();
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
-
+final navigatorKey = GlobalKey<NavigatorState>();
+final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -15,6 +25,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
+      scaffoldMessengerKey: scaffoldMessengerKey,
       title: 'Flutter By Tan Khang Pham',
       theme: ThemeData(
         textTheme: Theme.of(context).textTheme.apply(
@@ -22,7 +34,22 @@ class MyApp extends StatelessWidget {
               displayColor: Colors.white,
             ),
       ),
-      initialRoute: RouteGenerator.playlistScreen,
+      onGenerateInitialRoutes: (String initialRoute) {
+        return [
+          MaterialPageRoute(builder: (BuildContext context) {
+            return StreamBuilder<User?>(
+                stream: FirebaseAuth.instance.authStateChanges(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return const HomeScreen();
+                  } else {
+                    return const LoginScreen();
+                  }
+                });
+          })
+        ];
+      },
+      // initialRoute: RouteGenerator.homePage,
       onGenerateRoute: RouteGenerator.generateRoute,
       debugShowCheckedModeBanner: false,
     );

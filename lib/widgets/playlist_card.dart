@@ -28,12 +28,19 @@ class PlayListCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(15),
-                child: Image.network(
-                  playlist.imageUrl,
-                  height: 50,
-                  width: 50,
-                  fit: BoxFit.cover,
+                child: Container(
+                  decoration: BoxDecoration(
+                      image: DecorationImage(
+                          image: AssetImage(playlist.imageUrl),
+                          fit: BoxFit.cover)),
                 ),
+
+                //   height: 50,
+                //   width: 50,
+                //   fit: BoxFit.cover,
+                // Image.network(
+                //   playlist.imageUrl,
+                // ),
               ),
               const SizedBox(
                 width: 20,
