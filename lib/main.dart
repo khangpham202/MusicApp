@@ -16,8 +16,10 @@ Future<void> main() async {
   await Firebase.initializeApp();
   runApp(const MyApp());
 }
+
 final navigatorKey = GlobalKey<NavigatorState>();
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -29,11 +31,9 @@ class MyApp extends StatelessWidget {
       scaffoldMessengerKey: scaffoldMessengerKey,
       title: 'Flutter By Tan Khang Pham',
       theme: ThemeData(
-        textTheme: Theme.of(context).textTheme.apply(
-              bodyColor: Colors.white,
-              displayColor: Colors.white,
-            ),
+        brightness: Brightness.light,
       ),
+      // initialRoute: RouteGenerator.homePage,
       onGenerateInitialRoutes: (String initialRoute) {
         return [
           MaterialPageRoute(builder: (BuildContext context) {

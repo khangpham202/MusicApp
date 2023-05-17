@@ -43,7 +43,7 @@ class _CustomNavBarState extends State<_CustomNavBar> {
     const HomeScreen(),
     const FavoriteScreen(),
     const FavoriteScreen(),
-    ProfileScreen()
+    const ProfileScreen()
   ];
   void _onItemTapped(int index) {
     setState(() {

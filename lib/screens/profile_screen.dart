@@ -1,24 +1,78 @@
 // ignore_for_file: must_be_immutable
 
-import 'dart:convert';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cherry_toast/cherry_toast.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:music_app/widgets/widgets.dart';
+// import 'package:spotify/spotify.dart';
 
 import '../main.dart';
-import '../models/user_model.dart';
+// import '../models/user_model.dart';
 
-class ProfileScreen extends StatelessWidget {
-  ProfileScreen({super.key});
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   FirebaseAuth auth = FirebaseAuth.instance;
+  final oldPasswordController = TextEditingController();
+  final newPasswordController = TextEditingController();
+  User? currentUser = FirebaseAuth.instance.currentUser;
+  String? name, email;
+  @override
+  void initState() {
+    super.initState();
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (user != null) {
+        getData(user.uid);
+      }
+    });
+  }
+
+  void getData(String userId) {
+    DocumentReference docRef =
+        FirebaseFirestore.instance.collection('users').doc(userId);
+    docRef.get().then((docSnapshot) {
+      if (docSnapshot.exists) {
+        Map<String, dynamic>? data =
+            docSnapshot.data() as Map<String, dynamic>?;
+        setState(() {
+          name = data?['name'];
+          email = data?['email'];
+        });
+      } else {
+        return;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // String userId = auth.currentUser!.uid;
-
-    // final userRef = FirebaseDatabase.instance.ref("Users/$userId");
+    changePassword(
+        {required email, required oldPassword, required newPassword}) async {
+      var cred =
+          EmailAuthProvider.credential(email: email, password: oldPassword);
+      await currentUser!.reauthenticateWithCredential(cred).then((value) {
+        currentUser!.updatePassword(newPassword);
+        CherryToast.success(
+                title: const Text("Change password successfully",
+                    style: TextStyle(color: Colors.black)),
+                animationDuration: const Duration(milliseconds: 1000),
+                autoDismiss: true)
+            .show(context);
+      }).catchError((error) {
+        CherryToast.error(
+                title: Text(error.message.toString(),
+                    style: const TextStyle(color: Colors.black)),
+                animationDuration: const Duration(milliseconds: 1000),
+                autoDismiss: true)
+            .show(context);
+      });
+    }
 
     return Scaffold(
       bottomNavigationBar: const CustomNavBar(),
@@ -70,35 +124,140 @@ class ProfileScreen extends StatelessWidget {
               padding: const EdgeInsets.all(4),
               child: Column(
                 children: [
-                  const Card(
+                  Card(
                     elevation: 4,
                     child: ListTile(
-                      leading: Icon(Icons.person, color: Colors.brown),
+                      leading: const Icon(Icons.person, color: Colors.brown),
                       title: Text(
-                        "Lionel",
-                        style: TextStyle(color: Colors.black),
+                        "$name",
+                        style: const TextStyle(color: Colors.black),
                       ),
                     ),
                   ),
-                  const Card(
+                  Card(
                     elevation: 4,
                     child: ListTile(
-                      leading: Icon(Icons.email, color: Colors.purple),
+                      leading: const Icon(Icons.email, color: Colors.purple),
                       title: Text(
-                        "Lionel@gmail.com",
-                        style: TextStyle(color: Colors.black),
+                        "$email",
+                        style: const TextStyle(color: Colors.black),
                       ),
                     ),
                   ),
-                  const Card(
-                    elevation: 4,
-                    child: ListTile(
-                      leading: Icon(Icons.lock, color: Colors.blue),
-                      title: Text(
-                        "Change Passowrd",
-                        style: TextStyle(color: Colors.black),
+                  GestureDetector(
+                    onTap: () {
+                      showGeneralDialog(
+                          context: context,
+                          barrierLabel: "Barrier",
+                          barrierDismissible: true,
+                          barrierColor: Colors.black.withOpacity(0.5),
+                          transitionDuration: const Duration(milliseconds: 700),
+                          pageBuilder: (_, __, ___) {
+                            return Center(
+                                child: SizedBox(
+                              height: 350,
+                              child: Card(
+                                margin: const EdgeInsets.all(20),
+                                elevation: 3,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(15.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      TextFormField(
+                                        style: const TextStyle(
+                                          color: Colors
+                                              .black, // set the color of the text
+                                        ),
+                                        controller: oldPasswordController,
+                                        decoration: const InputDecoration(
+                                            prefixIcon: Icon(
+                                                Icons.person_outline_outlined),
+                                            labelText: "Old Password",
+                                            hintText: "Old Password",
+                                            border: OutlineInputBorder()),
+                                      ),
+                                      const SizedBox(
+                                        height: 10,
+                                      ),
+                                      TextFormField(
+                                        style: const TextStyle(
+                                          color: Colors
+                                              .black, // set the color of the text
+                                        ),
+                                        controller: newPasswordController,
+                                        decoration: const InputDecoration(
+                                            prefixIcon: Icon(
+                                                Icons.person_outline_outlined),
+                                            labelText: "New Password",
+                                            hintText: "New Password",
+                                            border: OutlineInputBorder()),
+                                      ),
+                                      const SizedBox(
+                                        height: 15,
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          FloatingActionButton.extended(
+                                            label: Row(
+                                              children: const [
+                                                Text("Close"),
+                                                Icon(Icons.close),
+                                              ],
+                                            ),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            extendedTextStyle: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w500),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                          const SizedBox(
+                                            width: 10,
+                                          ),
+                                          FloatingActionButton.extended(
+                                            label: Row(
+                                              children: const [
+                                                Text("Confirm"),
+                                                Icon(Icons.check),
+                                              ],
+                                            ),
+                                            onPressed: () async {
+                                              await changePassword(
+                                                email: email,
+                                                oldPassword:
+                                                    oldPasswordController.text,
+                                                newPassword:
+                                                    newPasswordController.text,
+                                              );
+                                            },
+                                            extendedTextStyle: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w500),
+                                          )
+                                        ],
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ));
+                          });
+                    },
+                    child: const Card(
+                      elevation: 4,
+                      child: ListTile(
+                        leading: Icon(Icons.lock, color: Colors.blue),
+                        title: Text(
+                          "Change Passowrd",
+                          style: TextStyle(color: Colors.black),
+                        ),
                       ),
-                      onTap: null,
                     ),
                   ),
                   Card(
@@ -112,12 +271,7 @@ class ProfileScreen extends StatelessWidget {
                       onTap: signOut,
                     ),
                   ),
-                  ElevatedButton(
-                      onPressed: () {
-                        // await getInforUser('5cyy5Kfp56Y1cBVJ6BiXnkuxBOI2');
-                        getInforUser('5cyy5Kfp56Y1cBVJ6BiXnkuxBOI2');
-                      },
-                      child: Text("abcd"))
+                  // ElevatedButton(onPressed: getData, child: Text("abcd"))
                 ],
               ),
             ),
@@ -125,20 +279,6 @@ class ProfileScreen extends StatelessWidget {
         ],
       )),
     );
-  }
-
-  Future<void> getInforUser(String userId) async {
-    try {
-      final userRef = FirebaseDatabase.instance.ref("Users/$userId");
-      late final UserModel user;
-      userRef.onValue.listen((event) {
-        final data = event.snapshot.value;
-        user = UserModel.fromJson(jsonDecode(jsonEncode(data)));
-      });
-      print(user);
-    } catch (e) {
-      return;
-    }
   }
 
   Future signOut() async {

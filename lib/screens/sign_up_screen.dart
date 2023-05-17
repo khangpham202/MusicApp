@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -224,9 +225,11 @@ class SignUpForm extends StatelessWidget {
       scaffoldMessengerKey.currentState?.showSnackBar(const SnackBar(
           content: Text("Sign-up successfully"),
           backgroundColor: Colors.green));
-      DatabaseReference userRef =
-          ref.child(FirebaseAuth.instance.currentUser!.uid);
-      userRef.push().set(userData);
+      FirebaseFirestore firestore = FirebaseFirestore.instance;
+      await firestore
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .set(userData);
     } on FirebaseAuthException catch (e) {
       scaffoldMessengerKey.currentState?.showSnackBar(
           SnackBar(content: Text("${e.message}"), backgroundColor: Colors.red));

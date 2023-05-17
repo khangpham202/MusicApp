@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/song_model.dart';
 import '../screens/screens.dart';
 
 class RouteGenerator {
@@ -31,18 +30,6 @@ class RouteGenerator {
       case profileScreen:
         return MaterialPageRoute(
           builder: (_) => ProfileScreen(),
-        );
-      case songScreen:
-        final song = settings.arguments as Song;
-        return MaterialPageRoute(
-          builder: (_) => const SongScreen(),
-          settings: RouteSettings(
-            arguments: song,
-          ),
-        );
-      case playlistScreen:
-        return MaterialPageRoute(
-          builder: (_) => const PlayListScreen(),
         );
       case loginScreen:
         return MaterialPageRoute(

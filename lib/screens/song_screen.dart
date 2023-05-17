@@ -1,169 +1,181 @@
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart';
 import '../models/song_model.dart';
-// import '../widgets/seekbar.dart';
-import '../widgets/widgets.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class SongScreen extends StatefulWidget {
-  const SongScreen({super.key});
-
+  const SongScreen({Key? key, required this.response}) : super(key: key);
+  final SongModel response;
   @override
   State<SongScreen> createState() => _SongScreenState();
 }
 
 class _SongScreenState extends State<SongScreen> {
   AudioPlayer audioPlayer = AudioPlayer();
-  late Song song;
+  bool isPlaying = false;
+  Duration duration = Duration.zero;
+  Duration position = Duration.zero;
 
-  Stream<SeekBarData> get _seekBarDataStream =>
-      Rx.combineLatest2<Duration, Duration?, SeekBarData>(
-          audioPlayer.positionStream, audioPlayer.durationStream,
-          (Duration position, Duration? duration) {
-        return SeekBarData(position, duration ?? Duration.zero);
+  @override
+  void initState() {
+    super.initState();
+
+    setAudio();
+
+    audioPlayer.onPlayerStateChanged.listen((state) {
+      setState(() {
+        isPlaying = state == PlayerState.playing;
       });
-
-  @override
-  Widget build(BuildContext context) {
-    final arguments = ModalRoute.of(context)!.settings.arguments as Song;
-
-    setState(() {
-      song = arguments;
-      audioPlayer.setAudioSource(ConcatenatingAudioSource(children: [
-        AudioSource.asset(song.url),
-      ]));
     });
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      extendBodyBehindAppBar: true,
-      body: Stack(fit: StackFit.expand, children: [
-        Image.asset(
-          song.coveUrl,
-          fit: BoxFit.cover,
-        ),
-        const _BackGroundFilter(),
-        _MusicPlayer(
-          song: song,
-          seekBarDataStream: _seekBarDataStream,
-          audioPlayer: audioPlayer,
-        ),
-      ]),
-    );
-  }
-}
 
-class _MusicPlayer extends StatelessWidget {
-  const _MusicPlayer({
-    Key? key,
-    required Stream<SeekBarData> seekBarDataStream,
-    required this.audioPlayer,
-    required this.song,
-  })  : _seekBarDataStream = seekBarDataStream,
-        super(key: key);
-  final Song song;
-  final Stream<SeekBarData> _seekBarDataStream;
-  final AudioPlayer audioPlayer;
+    // listen to audio duration
+    audioPlayer.onDurationChanged.listen((newDuration) {
+      setState(() {
+        duration = newDuration;
+      });
+    });
+
+    // listen to audio position
+    audioPlayer.onPositionChanged.listen((newPosition) {
+      position = newPosition;
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            song.title,
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall!
-                .copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(
-            height: 10,
-          ),
-          Text(
-            song.description,
-            maxLines: 2,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall!
-                .copyWith(color: Colors.white),
-          ),
-          const SizedBox(
-            height: 30,
-          ),
-          StreamBuilder<SeekBarData>(
-              stream: _seekBarDataStream,
-              builder: (context, snapshot) {
-                final positionData = snapshot.data;
-                return SeekBar(
-                  position: positionData?.position ?? Duration.zero,
-                  duration: positionData?.duration ?? Duration.zero,
-                  onChangeEnd: audioPlayer.seek,
-                );
-              }),
-          PlayerButtons(audioPlayer: audioPlayer),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
+    final url = widget.response.image.toString();
+    return Theme(
+      data: ThemeData.dark(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Music Detail Page"),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              IconButton(
-                iconSize: 35,
-                onPressed: () {
-                  print(audioPlayer.currentIndex);
-                },
-                icon: const Icon(Icons.settings, color: Colors.white),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.network(
+                  height: MediaQuery.of(context).size.height / 2.75,
+                  url,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
               ),
-              IconButton(
-                iconSize: 35,
-                onPressed: () {},
-                icon: const Icon(Icons.cloud_download, color: Colors.white),
+              const SizedBox(
+                height: 32,
               ),
+              Text(
+                widget.response.title.toString(),
+                style:
+                    const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(
+                height: 4,
+              ),
+              Text(
+                widget.response.artist.toString(),
+                style: const TextStyle(
+                  fontSize: 20,
+                ),
+              ),
+              SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                    trackHeight: 4,
+                    thumbShape: const RoundSliderThumbShape(
+                        disabledThumbRadius: 4, enabledThumbRadius: 4),
+                    overlayShape: const RoundSliderOverlayShape(
+                      overlayRadius: 10,
+                    ),
+                    activeTrackColor: Colors.white,
+                    inactiveTrackColor: Colors.white.withOpacity(0.2),
+                    thumbColor: Colors.white,
+                    overlayColor: Colors.white),
+                child: Slider(
+                    min: 0,
+                    max: duration.inSeconds.toDouble(),
+                    value: position.inSeconds.toDouble(),
+                    onChanged: (value) async {
+                      final position = Duration(seconds: value.toInt());
+                      await audioPlayer.seek(position);
+                      // optional :Play audio if was paused
+                      await audioPlayer.resume();
+                    }),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(formatTime(position)),
+                    Text(formatTime(duration - position)),
+                  ],
+                ),
+              ),
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                CircleAvatar(
+                  radius: 30,
+                  child: IconButton(
+                    onPressed: () async {},
+                    icon: const Icon(Icons.skip_previous),
+                    iconSize: 40,
+                  ),
+                ),
+                const SizedBox(
+                  width: 5,
+                ),
+                CircleAvatar(
+                  radius: 30,
+                  child: IconButton(
+                    onPressed: () async {
+                      if (isPlaying) {
+                        await audioPlayer.pause();
+                      } else {
+                        await audioPlayer.resume();
+                      }
+                    },
+                    icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+                    iconSize: 40,
+                  ),
+                ),
+                const SizedBox(
+                  width: 5,
+                ),
+                CircleAvatar(
+                  radius: 30,
+                  child: IconButton(
+                    onPressed: () async {},
+                    icon: const Icon(Icons.skip_next),
+                    iconSize: 40,
+                  ),
+                ),
+              ])
             ],
-          )
-        ],
+          ),
+        ),
       ),
     );
   }
-}
 
-class _BackGroundFilter extends StatelessWidget {
-  const _BackGroundFilter({
-    Key? key,
-  }) : super(key: key);
+  Future<void> setAudio() async {
+    // Repeat song when completed
+    audioPlayer.setReleaseMode(ReleaseMode.loop);
+    await audioPlayer.setSourceUrl(widget.response.source.toString());
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return ShaderMask(
-      shaderCallback: (rect) {
-        return LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.white,
-              Colors.white.withOpacity(0.5),
-              Colors.white.withOpacity(0.0),
-            ],
-            stops: const [
-              0.0,
-              0.4,
-              0.8
-            ]).createShader(rect);
-      },
-      blendMode: BlendMode.dstOut,
-      child: Container(
-          decoration: BoxDecoration(
-              gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-            Colors.deepPurple.shade200,
-            Colors.deepPurple.shade800
-          ]))),
-    );
+  String formatTime(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    final hours = twoDigits(duration.inHours);
+    final twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    final twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return [if (duration.inHours > 0) hours, twoDigitMinutes, twoDigitSeconds]
+        .join(':');
   }
 }
