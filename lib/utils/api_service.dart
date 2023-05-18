@@ -22,7 +22,6 @@ class ApiService {
           return SongModel.fromJson(e);
         }).toList();
 
-        debugPrint(response.body.toString());
         devlog.log(musicList.toString(), name: "MyMusicData");
         return musicList;
       } else {

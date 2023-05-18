@@ -17,7 +17,6 @@ class CustomNavBarState extends State<CustomNavBar> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const FavoriteScreen(),
-    const PlayScreen(),
     const ProfileScreen()
   ];
   void _onItemTapped(int index) {
@@ -47,10 +46,6 @@ class CustomNavBarState extends State<CustomNavBar> {
           BottomNavigationBarItem(
             icon: Icon(Icons.favorite_border_outlined),
             label: "Favotires",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.play_circle_outlined),
-            label: "Play",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.people_alt_outlined),
