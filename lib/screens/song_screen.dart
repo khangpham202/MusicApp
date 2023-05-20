@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:rxdart/rxdart.dart';
 import '../models/song_model.dart';
 import 'package:audioplayers/audioplayers.dart';
 
@@ -18,11 +21,40 @@ class _SongScreenState extends State<SongScreen> {
   Duration position = Duration.zero;
   final StreamController<double> _positionStreamController =
       StreamController<double>();
+  Timer? _timer;
+  double minValue = 0.0;
+  bool isFavorite = false;
+
+// add favorite song to firestore to user collection
+  void addFavoriteSong() async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .collection('favorite')
+        .doc(widget.response.id)
+        .set({
+      'id': widget.response.id,
+      // 'title': widget.response.title,
+      // 'artist': widget.response.artist,
+      // 'duration': widget.response.duration,
+      // 'image': widget.response.image,
+    });
+  }
+
+  // remove favorite song from firestore
+  void removeFavoriteSong() async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .collection('favorite')
+        .doc(widget.response.id)
+        .delete();
+  }
 
   @override
   void initState() {
     super.initState();
-
+    checkIsFavorite();
     setAudio();
 
     audioPlayer.onPlayerStateChanged.listen((state) {
@@ -42,12 +74,10 @@ class _SongScreenState extends State<SongScreen> {
     audioPlayer.onPositionChanged.listen((newPosition) {
       position = newPosition;
     });
-    Timer? timer;
-    timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       final currentPosition = await audioPlayer.getCurrentPosition();
-      if (mounted) {
-        setState(() {});
-      }
+      setState(() {});
       _positionStreamController.sink
           .add(currentPosition?.inMilliseconds.toDouble() ?? 0.0);
     });
@@ -55,18 +85,41 @@ class _SongScreenState extends State<SongScreen> {
 
   @override
   void dispose() {
+    _timer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final url = widget.response.image.toString();
-    
+
     return Theme(
       data: ThemeData.dark(),
       child: Scaffold(
         appBar: AppBar(
           title: const Text("Music Detail Page"),
+          actions: [
+            IconButton(
+              onPressed: () {
+                addFavoriteSong();
+                setState(() {
+                  isFavorite = !isFavorite;
+                });
+
+                if (isFavorite) {
+                  // add favorite song to firestore
+                  addFavoriteSong();
+                } else {
+                  // remove favorite song from firestore
+                  removeFavoriteSong();
+                }
+              },
+              icon: Icon(
+                Icons.favorite,
+                color: isFavorite ? Colors.red : Colors.white,
+              ),
+            )
+          ],
         ),
         body: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -196,5 +249,24 @@ class _SongScreenState extends State<SongScreen> {
     final twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
     return [if (duration.inHours > 0) hours, twoDigitMinutes, twoDigitSeconds]
         .join(':');
+  }
+
+  void checkIsFavorite() async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(
+            '${FirebaseAuth.instance.currentUser!.uid}/favourite/${widget.response.id}')
+        .get()
+        .then((value) {
+      if (value.exists) {
+        setState(() {
+          isFavorite = true;
+        });
+      } else {
+        setState(() {
+          isFavorite = false;
+        });
+      }
+    });
   }
 }

@@ -111,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ));
                     },
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      // mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Padding(
                           padding: const EdgeInsets.only(left: 8),
@@ -128,24 +128,27 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         ),
-                        Flexible(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                displayedSongs[index].title.toString(),
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 18),
-                              ),
-                              const SizedBox(
-                                height: 8,
-                              ),
-                              Text(
-                                displayedSongs[index].artist.toString(),
-                                style: const TextStyle(
-                                    color: Colors.grey, fontSize: 12),
-                              ),
-                            ],
+                        Expanded(
+                          flex: 1,
+                          child: Flexible(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  displayedSongs[index].title.toString(),
+                                  style: const TextStyle(
+                                      color: Colors.white, fontSize: 18),
+                                ),
+                                const SizedBox(
+                                  height: 8,
+                                ),
+                                Text(
+                                  displayedSongs[index].artist.toString(),
+                                  style: const TextStyle(
+                                      color: Colors.grey, fontSize: 12),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         // new Spacer(),

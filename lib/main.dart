@@ -26,32 +26,37 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      scaffoldMessengerKey: scaffoldMessengerKey,
-      title: 'Flutter By Tan Khang Pham',
-      theme: ThemeData(
-        brightness: Brightness.light,
-      ),
-      // initialRoute: RouteGenerator.homePage,
-      onGenerateInitialRoutes: (String initialRoute) {
-        return [
-          MaterialPageRoute(builder: (BuildContext context) {
-            return StreamBuilder<User?>(
-                stream: FirebaseAuth.instance.authStateChanges(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return const HomeScreen();
-                  } else {
-                    return const LoginScreen();
-                  }
-                });
-          })
-        ];
+    return Listener(
+      onPointerDown: (_) {
+        FocusManager.instance.primaryFocus?.unfocus();
       },
-      // initialRoute: RouteGenerator.homePage,
-      onGenerateRoute: RouteGenerator.generateRoute,
-      debugShowCheckedModeBanner: false,
+      child: MaterialApp(
+        navigatorKey: navigatorKey,
+        scaffoldMessengerKey: scaffoldMessengerKey,
+        title: 'Flutter By Tan Khang Pham',
+        theme: ThemeData(
+          brightness: Brightness.light,
+        ),
+        initialRoute: RouteGenerator.homePage,
+        onGenerateInitialRoutes: (String initialRoute) {
+          return [
+            MaterialPageRoute(builder: (BuildContext context) {
+              return StreamBuilder<User?>(
+                  stream: FirebaseAuth.instance.authStateChanges(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return const HomeScreen();
+                    } else {
+                      return const LoginScreen();
+                    }
+                  });
+            })
+          ];
+        },
+        // initialRoute: RouteGenerator.homePage,
+        onGenerateRoute: RouteGenerator.generateRoute,
+        debugShowCheckedModeBanner: false,
+      ),
     );
   }
 }

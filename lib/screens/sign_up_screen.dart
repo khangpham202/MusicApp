@@ -121,15 +121,25 @@ class SignUpScreenHeader extends StatelessWidget {
   }
 }
 
-class SignUpForm extends StatelessWidget {
-  SignUpForm({
+class SignUpForm extends StatefulWidget {
+  const SignUpForm({
     Key? key,
   }) : super(key: key);
+
+  @override
+  State<SignUpForm> createState() => _SignUpFormState();
+}
+
+class _SignUpFormState extends State<SignUpForm> {
   final fullName = TextEditingController();
+
   final emailController = TextEditingController();
+
   final passwordController = TextEditingController();
+
   final ref = FirebaseDatabase.instance.ref().child("Users");
 
+  // @override
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -222,6 +232,7 @@ class SignUpForm extends StatelessWidget {
         'name': fullName.text.trim(),
         'email': emailController.text.trim(),
       };
+
       scaffoldMessengerKey.currentState?.showSnackBar(const SnackBar(
           content: Text("Sign-up successfully"),
           backgroundColor: Colors.green));
