@@ -15,6 +15,36 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   List<SongModel> musicList = [];
 
+  List<SongModel> searchResults = [];
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  void _onSearchTextChanged(String name) {
+    if (name.isNotEmpty) {
+      ApiService().getFetchMusicDataByName(name).then((results) {
+        setState(() {
+          searchResults = results;
+        });
+      }).catchError((error) {});
+    } else {
+      setState(() {
+        searchResults = [];
+      });
+    }
+  }
+
+  void _startSearch() {
+    setState(() {
+      _isSearching = true;
+    });
+  }
+
+  void _cancelSearch() {
+    setState(() {
+      _isSearching = false;
+      _searchController.clear();
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -22,13 +52,114 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    List<SongModel> displayedSongs =
+        searchResults.isNotEmpty ? searchResults : musicList;
     return Theme(
       data: ThemeData.dark(),
       child: Scaffold(
-          appBar: const _CustomAppBar(),
-          bottomNavigationBar: const CustomNavBar(),
-          body: customListCard()),
+        appBar: AppBar(
+          title: _isSearching
+              ? TextField(
+                  controller: _searchController,
+                  onChanged: _onSearchTextChanged,
+                  decoration: const InputDecoration(
+                    hintText: 'Search Songs',
+                    hintStyle: TextStyle(color: Colors.white70),
+                  ),
+                )
+              : const Text('Search'),
+          actions: [
+            IconButton(
+              icon: _isSearching
+                  ? const Icon(Icons.clear)
+                  : const Icon(Icons.search),
+              onPressed: () {
+                if (_isSearching) {
+                  _cancelSearch();
+                } else {
+                  _startSearch();
+                }
+              },
+            ),
+          ],
+        ),
+        bottomNavigationBar: const CustomNavBar(),
+        body:
+            // customListCard()
+            Column(
+          children: [
+            Expanded(
+              child: SizedBox(
+                  child: ListView.separated(
+                separatorBuilder: (_, __) => const Divider(),
+                padding: EdgeInsets.zero,
+                itemBuilder: (context, index) {
+                  return InkWell(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                SongScreen(response: displayedSongs[index]),
+                          ));
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                                left: 8, bottom: 8, right: 8, top: 4),
+                            child: SizedBox(
+                              child: FadeInImage.assetNetwork(
+                                  height: 60,
+                                  width: 60,
+                                  placeholder: "assets/images/mck.jpg",
+                                  image: displayedSongs[index].image.toString(),
+                                  fit: BoxFit.fill),
+                            ),
+                          ),
+                        ),
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                displayedSongs[index].title.toString(),
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 18),
+                              ),
+                              const SizedBox(
+                                height: 8,
+                              ),
+                              Text(
+                                displayedSongs[index].artist.toString(),
+                                style: const TextStyle(
+                                    color: Colors.grey, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // new Spacer(),
+                        IconButton(onPressed: () {}, icon: Icon(Icons.favorite))
+                      ],
+                    ),
+                  );
+                },
+                itemCount: displayedSongs.length,
+              )),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -39,87 +170,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Widget customListCard() {
-    return ListView.builder(
-      padding: EdgeInsets.zero,
-      itemBuilder: (context, index) {
-        return InkWell(
-          onTap: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SongScreen(response: musicList[index]),
-                ));
-          },
-          child: Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                      left: 8, bottom: 8, right: 8, top: 4),
-                  child: SizedBox(
-                    child: FadeInImage.assetNetwork(
-                        height: 60,
-                        width: 60,
-                        placeholder: "assets/images/mck.jpg",
-                        image: musicList[index].image.toString(),
-                        fit: BoxFit.fill),
-                  ),
-                ),
-              ),
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      musicList[index].title.toString(),
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
-                    ),
-                    const SizedBox(
-                      height: 8,
-                    ),
-                    Text(
-                      musicList[index].artist.toString(),
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                  ],
-                ),
-              )
-            ],
-          ),
-        );
-      },
-      itemCount: musicList.length,
-    );
-  }
-}
+  // Widget customListCard() {
+  //   return
 
-class _CustomAppBar extends StatelessWidget with PreferredSizeWidget {
-  const _CustomAppBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      leading: const Icon(Icons.grid_view_rounded),
-      actions: [
-        Container(
-          margin: const EdgeInsets.only(right: 20),
-          child: const CircleAvatar(
-            backgroundImage: NetworkImage(
-                "https://images.unsplash.com/photo-1581088547417-790ffe02b79d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxlZGl0b3JpYWwtZmVlZHwzfHx8ZW58MHx8fHw%3D&auto=format&fit=crop&w=1000&q=60"),
-          ),
-        )
-      ],
-      title: const Text("Music App"),
-      centerTitle: true,
-    );
-  }
-
-  @override
-  Size get preferredSize {
-    return const Size.fromHeight(40.0);
-  }
+  // }
 }

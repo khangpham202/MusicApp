@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         brightness: Brightness.light,
       ),
-      initialRoute: RouteGenerator.homePage,
+      // initialRoute: RouteGenerator.homePage,
       onGenerateInitialRoutes: (String initialRoute) {
         return [
           MaterialPageRoute(builder: (BuildContext context) {

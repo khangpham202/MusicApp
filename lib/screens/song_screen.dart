@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:rxdart/rxdart.dart';
 import '../models/song_model.dart';
 import 'package:audioplayers/audioplayers.dart';
 
@@ -19,8 +18,7 @@ class _SongScreenState extends State<SongScreen> {
   Duration position = Duration.zero;
   final StreamController<double> _positionStreamController =
       StreamController<double>();
-  Timer? _timer;
-  double minValue = 0.0;
+
   @override
   void initState() {
     super.initState();
@@ -44,10 +42,12 @@ class _SongScreenState extends State<SongScreen> {
     audioPlayer.onPositionChanged.listen((newPosition) {
       position = newPosition;
     });
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+    Timer? timer;
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       final currentPosition = await audioPlayer.getCurrentPosition();
-      setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
       _positionStreamController.sink
           .add(currentPosition?.inMilliseconds.toDouble() ?? 0.0);
     });
@@ -61,7 +61,7 @@ class _SongScreenState extends State<SongScreen> {
   @override
   Widget build(BuildContext context) {
     final url = widget.response.image.toString();
-
+    
     return Theme(
       data: ThemeData.dark(),
       child: Scaffold(
