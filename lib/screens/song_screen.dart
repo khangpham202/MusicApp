@@ -1,15 +1,19 @@
+// ignore_for_file: must_be_immutable
+
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:rxdart/rxdart.dart';
 import '../models/song_model.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 class SongScreen extends StatefulWidget {
-  const SongScreen({Key? key, required this.response}) : super(key: key);
-  final SongModel response;
+  SongScreen({Key? key, required this.song, required this.currentIndex})
+      : super(key: key);
+  final List<SongModel> song;
+  late int currentIndex;
+
   @override
   State<SongScreen> createState() => _SongScreenState();
 }
@@ -24,20 +28,16 @@ class _SongScreenState extends State<SongScreen> {
   Timer? _timer;
   double minValue = 0.0;
   bool isFavorite = false;
-
+  late int currentIndex;
 // add favorite song to firestore to user collection
   void addFavoriteSong() async {
     await FirebaseFirestore.instance
         .collection('users')
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .collection('favorite')
-        .doc(widget.response.id)
+        .doc(widget.song[widget.currentIndex].id)
         .set({
-      'id': widget.response.id,
-      // 'title': widget.response.title,
-      // 'artist': widget.response.artist,
-      // 'duration': widget.response.duration,
-      // 'image': widget.response.image,
+      'id': widget.song[widget.currentIndex].id,
     });
   }
 
@@ -47,14 +47,14 @@ class _SongScreenState extends State<SongScreen> {
         .collection('users')
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .collection('favorite')
-        .doc(widget.response.id)
+        .doc(widget.song[widget.currentIndex].id)
         .delete();
   }
 
   @override
   void initState() {
-    super.initState();
     checkIsFavorite();
+    super.initState();
     setAudio();
 
     audioPlayer.onPlayerStateChanged.listen((state) {
@@ -91,29 +91,35 @@ class _SongScreenState extends State<SongScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final url = widget.response.image.toString();
+    checkIsFavorite();
+    void playNext() {
+      setState(() {
+        widget.currentIndex++;
+        audioPlayer
+            .setSourceUrl(widget.song[widget.currentIndex].source.toString());
+      });
+    }
 
+    void playPrevious() {
+      checkIsFavorite();
+
+      setState(() {
+        widget.currentIndex--;
+        audioPlayer
+            .setSourceUrl(widget.song[widget.currentIndex].source.toString());
+      });
+    }
+
+    final url = widget.song[widget.currentIndex].image.toString();
     return Theme(
       data: ThemeData.dark(),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text("Music Detail Page"),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
           actions: [
             IconButton(
-              onPressed: () {
-                addFavoriteSong();
-                setState(() {
-                  isFavorite = !isFavorite;
-                });
-
-                if (isFavorite) {
-                  // add favorite song to firestore
-                  addFavoriteSong();
-                } else {
-                  // remove favorite song from firestore
-                  removeFavoriteSong();
-                }
-              },
+              onPressed: handleAddFavortie,
               icon: Icon(
                 Icons.favorite,
                 color: isFavorite ? Colors.red : Colors.white,
@@ -139,7 +145,7 @@ class _SongScreenState extends State<SongScreen> {
                 height: 32,
               ),
               Text(
-                widget.response.title.toString(),
+                widget.song[widget.currentIndex].title.toString(),
                 style:
                     const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
@@ -147,25 +153,25 @@ class _SongScreenState extends State<SongScreen> {
                 height: 4,
               ),
               Text(
-                widget.response.artist.toString(),
+                widget.song[widget.currentIndex].artist.toString(),
                 style: const TextStyle(
                   fontSize: 20,
                 ),
               ),
+              const SizedBox(height: 10),
               StreamBuilder(
                 stream: _positionStreamController.stream,
                 builder: (context, snapshot) {
-                  // final currentPosition = snapshot.data;
                   return SliderTheme(
                     data: SliderTheme.of(context).copyWith(
-                        trackHeight: 4,
+                        trackHeight: 8,
                         thumbShape: const RoundSliderThumbShape(
-                            disabledThumbRadius: 4, enabledThumbRadius: 4),
+                            disabledThumbRadius: 8, enabledThumbRadius: 8),
                         overlayShape: const RoundSliderOverlayShape(
                           overlayRadius: 10,
                         ),
-                        activeTrackColor: Colors.white,
-                        inactiveTrackColor: Colors.white.withOpacity(0.2),
+                        activeTrackColor: Colors.red,
+                        inactiveTrackColor: Colors.grey,
                         thumbColor: Colors.white,
                         overlayColor: Colors.white),
                     child: Slider(
@@ -175,7 +181,6 @@ class _SongScreenState extends State<SongScreen> {
                         onChanged: (value) async {
                           final position = Duration(seconds: value.toInt());
                           await audioPlayer.seek(position);
-                          // optional :Play audio if was paused
                           await audioPlayer.resume();
                         }),
                   );
@@ -194,10 +199,21 @@ class _SongScreenState extends State<SongScreen> {
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 CircleAvatar(
                   radius: 30,
-                  child: IconButton(
-                    onPressed: () async {},
-                    icon: const Icon(Icons.skip_previous),
-                    iconSize: 40,
+                  child: GestureDetector(
+                    onTap: () {
+                      if (widget.currentIndex > 0) {
+                        playPrevious();
+                      } else {
+                        return;
+                      }
+                    },
+                    child: Icon(
+                      Icons.skip_previous,
+                      color: widget.currentIndex == 0
+                          ? const Color.fromARGB(255, 121, 120, 120)
+                          : Colors.white,
+                      size: 40,
+                    ),
                   ),
                 ),
                 const SizedBox(
@@ -205,16 +221,18 @@ class _SongScreenState extends State<SongScreen> {
                 ),
                 CircleAvatar(
                   radius: 30,
-                  child: IconButton(
-                    onPressed: () async {
+                  child: GestureDetector(
+                    onTap: () async {
                       if (isPlaying) {
                         await audioPlayer.pause();
                       } else {
                         await audioPlayer.resume();
                       }
                     },
-                    icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
-                    iconSize: 40,
+                    child: Icon(
+                      isPlaying ? Icons.pause : Icons.play_arrow,
+                      size: 40,
+                    ),
                   ),
                 ),
                 const SizedBox(
@@ -222,10 +240,21 @@ class _SongScreenState extends State<SongScreen> {
                 ),
                 CircleAvatar(
                   radius: 30,
-                  child: IconButton(
-                    onPressed: () async {},
-                    icon: const Icon(Icons.skip_next),
-                    iconSize: 40,
+                  child: GestureDetector(
+                    onTap: () {
+                      if (widget.currentIndex < widget.song.length - 1) {
+                        playNext();
+                      } else {
+                        return;
+                      }
+                    },
+                    child: Icon(
+                      Icons.skip_next,
+                      color: widget.currentIndex == widget.song.length - 1
+                          ? const Color.fromARGB(255, 121, 120, 120)
+                          : Colors.white,
+                      size: 40,
+                    ),
                   ),
                 ),
               ])
@@ -239,7 +268,8 @@ class _SongScreenState extends State<SongScreen> {
   Future<void> setAudio() async {
     // Repeat song when completed
     audioPlayer.setReleaseMode(ReleaseMode.loop);
-    await audioPlayer.setSourceUrl(widget.response.source.toString());
+    await audioPlayer
+        .setSourceUrl(widget.song[widget.currentIndex].source.toString());
   }
 
   String formatTime(Duration duration) {
@@ -251,22 +281,33 @@ class _SongScreenState extends State<SongScreen> {
         .join(':');
   }
 
-  void checkIsFavorite() async {
+  void handleAddFavortie() {
+    if (isFavorite == true) {
+      removeFavoriteSong();
+      setState(() {
+        isFavorite = false;
+      });
+    } else {
+      addFavoriteSong();
+      setState(() {
+        isFavorite = true;
+      });
+    }
+  }
+
+  Future<bool> checkIsFavorite() async {
     await FirebaseFirestore.instance
         .collection('users')
         .doc(
-            '${FirebaseAuth.instance.currentUser!.uid}/favourite/${widget.response.id}')
+            '${FirebaseAuth.instance.currentUser!.uid}/favorite/${widget.song[widget.currentIndex].id}')
         .get()
         .then((value) {
       if (value.exists) {
-        setState(() {
-          isFavorite = true;
-        });
+        isFavorite = true;
       } else {
-        setState(() {
-          isFavorite = false;
-        });
+        isFavorite = false;
       }
     });
+    return isFavorite;
   }
 }

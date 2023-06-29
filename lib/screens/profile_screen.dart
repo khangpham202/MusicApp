@@ -5,7 +5,6 @@ import 'package:cherry_toast/cherry_toast.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:music_app/widgets/widgets.dart';
-// import 'package:spotify/spotify.dart';
 
 import '../main.dart';
 // import '../models/user_model.dart';

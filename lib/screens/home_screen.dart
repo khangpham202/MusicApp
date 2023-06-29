@@ -61,10 +61,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     List<SongModel> displayedSongs =
         searchResults.isNotEmpty ? searchResults : musicList;
+    // print(displayedSongs);
     return Theme(
       data: ThemeData.dark(),
       child: Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           title: _isSearching
               ? TextField(
                   controller: _searchController,
@@ -91,9 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         bottomNavigationBar: const CustomNavBar(),
-        body:
-            // customListCard()
-            Column(
+        body: Column(
           children: [
             Expanded(
               child: SizedBox(
@@ -106,9 +106,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                SongScreen(response: displayedSongs[index]),
+                            builder: (context) => SongScreen(
+                                song: displayedSongs, currentIndex: index),
                           ));
+                      // displayedSongs = musicList;
                     },
                     child: Row(
                       // mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -122,37 +123,33 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: FadeInImage.assetNetwork(
                                   height: 60,
                                   width: 60,
-                                  placeholder: "assets/images/mck.jpg",
+                                  placeholder: "assets/images/loading.jpg",
                                   image: displayedSongs[index].image.toString(),
                                   fit: BoxFit.fill),
                             ),
                           ),
                         ),
-                        Expanded(
-                          flex: 1,
-                          child: Flexible(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  displayedSongs[index].title.toString(),
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 18),
-                                ),
-                                const SizedBox(
-                                  height: 8,
-                                ),
-                                Text(
-                                  displayedSongs[index].artist.toString(),
-                                  style: const TextStyle(
-                                      color: Colors.grey, fontSize: 12),
-                                ),
-                              ],
-                            ),
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                displayedSongs[index].title.toString(),
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 18),
+                              ),
+                              const SizedBox(
+                                height: 8,
+                              ),
+                              Text(
+                                displayedSongs[index].artist.toString(),
+                                style: const TextStyle(
+                                    color: Colors.grey, fontSize: 12),
+                              ),
+                            ],
                           ),
                         ),
                         // new Spacer(),
-                        IconButton(onPressed: () {}, icon: Icon(Icons.favorite))
                       ],
                     ),
                   );
@@ -172,9 +169,4 @@ class _HomeScreenState extends State<HomeScreen> {
       musicList = musiclist;
     });
   }
-
-  // Widget customListCard() {
-  //   return
-
-  // }
 }

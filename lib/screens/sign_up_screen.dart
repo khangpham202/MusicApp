@@ -25,7 +25,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SignUpScreenHeader(size: size),
-                SignUpForm(),
+                const SignUpForm(),
                 const SignUpScreenFooter()
               ],
             ),
@@ -131,13 +131,18 @@ class SignUpForm extends StatefulWidget {
 }
 
 class _SignUpFormState extends State<SignUpForm> {
-  final fullName = TextEditingController();
+  final fullName = TextEditingController(text: '');
 
-  final emailController = TextEditingController();
+  final emailController = TextEditingController(text: '');
 
-  final passwordController = TextEditingController();
+  final passwordController = TextEditingController(text: '');
 
   final ref = FirebaseDatabase.instance.ref().child("Users");
+  late bool _passwordInVisible;
+  @override
+  void initState() {
+    _passwordInVisible = true;
+  }
 
   // @override
   @override
@@ -186,19 +191,28 @@ class _SignUpFormState extends State<SignUpForm> {
               color: Colors.black, // set the color of the text
             ),
             controller: passwordController,
-            decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.lock),
+            decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.lock),
                 labelText: "Password",
                 hintText: "Password",
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
                 suffixIcon: IconButton(
-                    onPressed: null,
-                    icon: Icon(Icons.remove_red_eye_outlined))),
+                  onPressed: () {
+                    setState(() {
+                      _passwordInVisible = !_passwordInVisible;
+                    });
+                  },
+                  icon: Icon(
+                    _passwordInVisible
+                        ? Icons.visibility_off
+                        : Icons.visibility,
+                  ),
+                )),
             autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: (value) => value != null && value.length < 6
                 ? 'Enter.min 6 characters'
                 : null,
-            obscureText: true,
+            obscureText: _passwordInVisible,
           ),
           const SizedBox(
             height: 10,

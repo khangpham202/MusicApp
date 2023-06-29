@@ -11,6 +11,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final emailController = TextEditingController(text: '');
+  final passwordController = TextEditingController(text: '');
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -23,7 +25,10 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 LoginScreenHeader(size: size),
-                LoginForm(),
+                LoginForm(
+                  emailController: emailController,
+                  passwordController: passwordController,
+                ),
                 const LoginScreenFooter()
               ],
             ),
@@ -122,16 +127,22 @@ class LoginScreenHeader extends StatelessWidget {
 class LoginForm extends StatefulWidget {
   const LoginForm({
     Key? key,
+    required this.emailController,
+    required this.passwordController,
   }) : super(key: key);
+  final TextEditingController emailController;
+  final TextEditingController passwordController;
 
   @override
   State<LoginForm> createState() => _LoginFormState();
 }
 
 class _LoginFormState extends State<LoginForm> {
-  final emailController = TextEditingController();
-
-  final passwordController = TextEditingController();
+  late bool _passwordInVisible;
+  @override
+  void initState() {
+    _passwordInVisible = true;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +153,7 @@ class _LoginFormState extends State<LoginForm> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextFormField(
-              controller: emailController,
+              controller: widget.emailController,
               style: const TextStyle(
                 color: Colors.black, // set the color of the text
               ),
@@ -161,19 +172,28 @@ class _LoginFormState extends State<LoginForm> {
               height: 10,
             ),
             TextFormField(
-              controller: passwordController,
+              controller: widget.passwordController,
               style: const TextStyle(
                 color: Colors.black, // set the color of the text
               ),
-              decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.lock),
+              obscureText: _passwordInVisible,
+              decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.lock),
                   labelText: "Password",
                   hintText: "Password",
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
-                      onPressed: null,
-                      icon: Icon(Icons.remove_red_eye_outlined))),
-              obscureText: true,
+                    onPressed: () {
+                      setState(() {
+                        _passwordInVisible = !_passwordInVisible;
+                      });
+                    },
+                    icon: Icon(
+                      _passwordInVisible
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                  )),
               autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: (value) => value != null && value.length < 6
                   ? 'Enter.min 6 characters'
@@ -213,8 +233,8 @@ class _LoginFormState extends State<LoginForm> {
   Future signIn() async {
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
+        email: widget.emailController.text.trim(),
+        password: widget.passwordController.text.trim(),
       );
       navigatorKey.currentState?.pushNamed('/');
     } on FirebaseAuthException catch (e) {

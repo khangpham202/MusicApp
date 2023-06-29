@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_function_literals_in_foreach_calls
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -6,28 +8,12 @@ import 'package:music_app/widgets/widgets.dart';
 import '../models/song_model.dart';
 import '../utils/api_service.dart';
 import 'screens.dart';
-import 'song_screen.dart';
 
 class FavoriteScreen extends StatefulWidget {
   const FavoriteScreen({super.key});
 
   @override
   State<FavoriteScreen> createState() => _FavoriteScreenState();
-}
-
-// function get userid from firestore
-
-Future<void> getuid() async {
-  final FirebaseAuth auth = FirebaseAuth.instance;
-  final User? user = auth.currentUser;
-  final uid = user!.uid;
-  final CollectionReference usersCollection =
-      FirebaseFirestore.instance.collection('users');
-  final QuerySnapshot querySnapshot =
-      await usersCollection.where('uid', isEqualTo: uid).get();
-  final List<DocumentSnapshot> documents = querySnapshot.docs;
-
-  // rest of the function code...
 }
 
 class _FavoriteScreenState extends State<FavoriteScreen> {
@@ -49,25 +35,38 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-          gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-            Colors.deepPurple.shade800.withOpacity(0.8),
-            Colors.deepPurple.shade200.withOpacity(0.8)
-          ])),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            "Favourite List",
-            style: TextStyle(color: Colors.white),
+    return Theme(
+      data: ThemeData.dark(),
+      child: Container(
+        decoration: BoxDecoration(
+            gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+              Colors.deepPurple.shade800.withOpacity(0.8),
+              Colors.deepPurple.shade200.withOpacity(0.8)
+            ])),
+        child: Scaffold(
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            title: const Text(
+              "Favourite List",
+              style: TextStyle(color: Colors.white, fontSize: 25),
+            ),
+            actions: const [
+              IconButton(
+                  onPressed: null,
+                  icon: Icon(
+                    Icons.favorite,
+                    color: Colors.red,
+                    size: 25,
+                  ))
+            ],
           ),
+          // body:
+          body: customListCard(),
+          bottomNavigationBar: const CustomNavBar(),
         ),
-        // body:
-        body: customListCard(),
-        bottomNavigationBar: const CustomNavBar(),
       ),
     );
   }
@@ -95,6 +94,11 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
   }
 
   Widget customListCard() {
+    List<SongModel> displayedSongs = [];
+    for (int i = 0; i < favoriteList.length; i++) {
+      displayedSongs.add(
+          musicList.firstWhere((element) => element.id == favoriteList[i]));
+    }
     return ListView.separated(
       separatorBuilder: (_, __) => const Divider(),
       padding: EdgeInsets.zero,
@@ -106,8 +110,9 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => SongScreen(
-                      response: musicList.firstWhere(
-                          (element) => element.id == favoriteList[index])),
+                    song: displayedSongs,
+                    currentIndex: index,
+                  ),
                 ));
           },
           child: Row(
@@ -122,7 +127,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                     child: FadeInImage.assetNetwork(
                         height: 60,
                         width: 60,
-                        placeholder: "assets/images/mck.jpg",
+                        placeholder: "assets/images/loading.jpg",
                         image: musicList
                             .firstWhere(
                                 (element) => element.id == favoriteList[index])
@@ -142,7 +147,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                               (element) => element.id == favoriteList[index])
                           .title
                           .toString(),
-                      style: const TextStyle(color: Colors.black, fontSize: 18),
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
                     ),
                     const SizedBox(
                       height: 8,

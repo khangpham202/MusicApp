@@ -29,7 +29,7 @@ class RouteGenerator {
         );
       case profileScreen:
         return MaterialPageRoute(
-          builder: (_) => ProfileScreen(),
+          builder: (_) => const ProfileScreen(),
         );
       case loginScreen:
         return MaterialPageRoute(

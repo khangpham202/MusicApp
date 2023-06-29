@@ -29,6 +29,10 @@ class CustomNavBarState extends State<CustomNavBar> {
 
   @override
   Widget build(BuildContext context) {
+    const bottomNavigationBarItem = BottomNavigationBarItem(
+            icon: Icon(Icons.favorite_border_outlined),
+            label: "Favotires",
+          );
     return BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.deepPurple.shade800,
@@ -43,10 +47,7 @@ class CustomNavBarState extends State<CustomNavBar> {
             icon: Icon(Icons.home),
             label: "Home",
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_border_outlined),
-            label: "Favotires",
-          ),
+          bottomNavigationBarItem,
           BottomNavigationBarItem(
             icon: Icon(Icons.people_alt_outlined),
             label: "Profile",

@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           brightness: Brightness.light,
         ),
-        initialRoute: RouteGenerator.homePage,
+        // initialRoute: RouteGenerator.homePage,
         onGenerateInitialRoutes: (String initialRoute) {
           return [
             MaterialPageRoute(builder: (BuildContext context) {
@@ -45,6 +45,7 @@ class MyApp extends StatelessWidget {
                   stream: FirebaseAuth.instance.authStateChanges(),
                   builder: (context, snapshot) {
                     if (snapshot.hasData) {
+                      // print(snapshot.data);
                       return const HomeScreen();
                     } else {
                       return const LoginScreen();
@@ -53,7 +54,6 @@ class MyApp extends StatelessWidget {
             })
           ];
         },
-        // initialRoute: RouteGenerator.homePage,
         onGenerateRoute: RouteGenerator.generateRoute,
         debugShowCheckedModeBanner: false,
       ),
